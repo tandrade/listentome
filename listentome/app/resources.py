@@ -1,4 +1,5 @@
-from flask_restful import abort, Resource
+class SongMetadataCollectionException(Exception):
+    pass
 
 
 class SongCategorizer:
@@ -14,19 +15,40 @@ class SongCategorizer:
         return sorted(self.talkative, reverse=reverse)[:n+1]
 
 
-class SongMetadata(Resource):
+class SongMetadataCollector(Resource):
+
+    def __init__(self, code):
+        self.code = code
+        self.songs = []
 
     def fetch_songs(self):
-        # TODO: fetch songs from user library
-        return {}
+        limit = 50
+        offset = 0
+        iterations = 0
+        max_iterations = 50
+        songs = requests.get("https://api.spotify.com/v1/me/tracks", params={"limit": limit}, headers={"Authorization": "Bearer %s" %})
+        if songs.response_code != 200:
+            raise SongMetadataCollectionException
+        song_data = songs.json()
+        offset = len(song_data["items"])
+
+        count = song_data.get("count", 0)
+        while limit * offset < count:
+            iterations += 1
+            songs = requests.get("https://api.spotify.com/v1/me/tracks", params={"limit": limit, "offset": offset}, headers={"Authorization": "Bearer %s" %})\
+            if songs.response_code != 200:
+                break
+            song_data = songs.json()
+            offset = offset  len(song_data["items"])
+            if iterations >= max_iterations:
+                break
+        return []
 
     def fetch_song_info(self):
         # TODO: iterate over chunks of code and fetch song info
         return {}
 
     def get(self):
-        if "code" not in request.data:
-            abort(400, message="A code is required to fetch song information.")
         n_songs = 15 # TODO: add query param
         songs = self.fetch_songs(code)
         song_info = self.fetch_song_info(songs)

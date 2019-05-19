@@ -34,6 +34,8 @@ def authorization():
     if not token.status_code == 200:
         return render_template("authorization_error.html")
     data = token.json()
-    if "code" not in data:
+    if "access_token" not in data:
         return render_template("authorization_error.html")
-    return render_template("authorize.html", code=token.json()["code"])
+
+    song_data = requests.get()
+    return render_template("authorize.html", code=token.json()["access_token"])
